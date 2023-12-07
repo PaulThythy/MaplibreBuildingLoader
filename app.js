@@ -72,7 +72,7 @@ const customLayer = {
         directionalLight2.position.set(0, 70, 100).normalize();
         this.scene.add(directionalLight, directionalLight2, ambientLight);
 
-        ifcLoader.load('testIFCFiles/01.ifc', (ifcModel) => {
+        ifcLoader.load('testIFCFiles/rac_advanced_sample_project.ifc', (ifcModel) => {
             const mesh = new THREE.Mesh(ifcModel.geometry, new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
             this.scene.add(ifcModel.mesh);
         });
