@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <title>Raycasting with Mapbox</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src='https://unpkg.com/maplibre-gl@3.5.2/dist/maplibre-gl.js'></script>
+  <link href='https://unpkg.com/maplibre-gl@3.5.2/dist/maplibre-gl.css' rel='stylesheet' />
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.js'></script>
+  
+  <style>
+    body { margin:0; padding:0; }
+    #map { position:absolute; top:0; bottom:0; width:100%; }
+    #info { position: absolute; top: 0; left: 0; z-index: 10; background-color: white; padding: 12px;}
+  </style>
+</head>
+<body>
+
+<div id='map'></div>
+<div id="info"></div>
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
