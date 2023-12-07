@@ -1,10 +1,24 @@
-import * as THREE from 'https://unpkg.com/three@0.109.0/build/three.module.js';
+import * as THREE from 'three';
 
-const {MercatorCoordinate} = maplibregl;
+import { IFCLoader } from 'web-ifc-three';
+import { IFCSPACE } from 'web-ifc';
 
-const map = new maplibregl.Map({
-  container: 'map',
-  style: {
+var mapOrigin = { LngLat: [5.0801, 47.3134], altitude: 0, rotation: new THREE.Vector3(Math.PI / 2, 0, 0) };
+var mapMercatorCoordinates = maplibregl.MercatorCoordinate.fromLngLat([mapOrigin.LngLat[0], mapOrigin.LngLat[1]], mapOrigin.altitude);
+
+var mapOriginTransform = {
+    translateX: mapMercatorCoordinates.x,
+    translateY: mapMercatorCoordinates.y,
+    translateZ: mapMercatorCoordinates.z,
+    rotateX: mapOrigin.rotation.x,
+    rotateY: mapOrigin.rotation.y,
+    rotateZ: mapOrigin.rotation.z,
+    scale: mapMercatorCoordinates.meterInMercatorCoordinateUnits()
+};
+
+var map = window.map = new maplibregl.Map({
+    container: 'map', // container id
+    style: {
         'version': 8,
         'sources': {
             'raster-tiles': {
@@ -25,129 +39,83 @@ const map = new maplibregl.Map({
             }
         ]
     },
-  center: [-74.0445, 40.6892],
-  zoom: 16,
-  pitch: 60,
-  bearing: 120,
+    center: [mapOrigin.LngLat[0], mapOrigin.LngLat[1]], // starting position [lng, lat]
+    zoom: 18, // starting zoom
+    pitch: 60
 });
 
-class BoxCustomLayer {
-  type = 'custom';
-  renderingMode = '3d';
+const ifcLoader = new IFCLoader();
+await ifcLoader.ifcManager.setWasmPath('https://unpkg.com/web-ifc@0.0.36/', true);
 
-  constructor(id) {
-    this.id = id;
-  }
+await ifcLoader.ifcManager.parser.setupOptionalCategories({
+    [IFCSPACE]: false,
+});
 
-  async onAdd(map, gl) {
-    this.camera = new THREE.PerspectiveCamera(28, window.innerWidth / window.innerHeight, 0.1, 1e6);
-    // this.camera = new THREE.Camera();
+await ifcLoader.ifcManager.applyWebIfcConfig({
+    USE_FAST_BOOLS: true
+});
 
-    const centerLngLat = map.getCenter();
-    this.center = MercatorCoordinate.fromLngLat(centerLngLat, 0);
-    const {x, y, z} = this.center;
-		const s = this.center.meterInMercatorCoordinateUnits();
+const customLayer = {
+    id: '3d-model',
+    type: 'custom',
+    renderingMode: '3d',
 
-    const scale = new THREE.Matrix4().makeScale(s, s, -s);
-    const rotation = new THREE.Matrix4().multiplyMatrices(
-    		new THREE.Matrix4().makeRotationX(-0.5 * Math.PI),
-        new THREE.Matrix4().makeRotationY(Math.PI));
-    
-    this.cameraTransform = new THREE.Matrix4().multiplyMatrices(scale, rotation).setPosition(x, y, z);
+    onAdd: function (map, gl) {
+        this.camera = new THREE.PerspectiveCamera();
+        this.scene = new THREE.Scene();
 
-    this.map = map;
-    this.scene = this.makeScene();
+        const directionalLight = new THREE.DirectionalLight(0x404040);
+        const directionalLight2 = new THREE.DirectionalLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0x404040, 100);
 
-    // use the Mapbox GL JS map canvas for three.js
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: map.getCanvas(),
-      context: gl,
-      antialias: true,
-    });
+        directionalLight.position.set(0, -70, 100).normalize();
+        directionalLight2.position.set(0, 70, 100).normalize();
+        this.scene.add(directionalLight, directionalLight2, ambientLight);
 
-    this.renderer.autoClear = false;
+        ifcLoader.load('testIFCFiles/01.ifc', (ifcModel) => {
+            const mesh = new THREE.Mesh(ifcModel.geometry, new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+            this.scene.add(ifcModel.mesh);
+        });
 
-    this.raycaster = new THREE.Raycaster();
-    this.raycaster.near = -1;
-    this.raycaster.far = 1e6;
-  }
+        this.map = map;
 
-  makeScene() {
-    const scene = new THREE.Scene();
-    const skyColor = 0xb1e1ff; // light blue
-    const groundColor = 0xb97a20; // brownish orange
+        this.renderer = new THREE.WebGLRenderer({ canvas: map.getCanvas(), context: gl });
+        this.renderer.autoClear = false;
+    },
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-    scene.add(new THREE.HemisphereLight(skyColor, groundColor, 0.25));
+    render(gl, matrix) {
+        const rotationX = new THREE.Matrix4().makeRotationAxis(
+            new THREE.Vector3(1, 0, 0), mapOriginTransform.rotateX);
+        const rotationY = new THREE.Matrix4().makeRotationAxis(
+            new THREE.Vector3(0, 1, 0), mapOriginTransform.rotateY);
+        const rotationZ = new THREE.Matrix4().makeRotationAxis(
+            new THREE.Vector3(0, 0, 1), mapOriginTransform.rotateZ);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(-70, -70, 100).normalize();
-    // Directional lights implicitly point at (0, 0, 0).
-    scene.add(directionalLight);
+        const m = new THREE.Matrix4().fromArray(matrix);
+        const l = new THREE.Matrix4()
+            .makeTranslation(
+                mapOriginTransform.translateX,
+                mapOriginTransform.translateY,
+                mapOriginTransform.translateZ
+            )
+            .scale(
+                new THREE.Vector3(
+                    mapOriginTransform.scale,
+                    -mapOriginTransform.scale,
+                    mapOriginTransform.scale)
+            )
+            .multiply(rotationX)
+            .multiply(rotationY)
+            .multiply(rotationZ);
 
-    const group = new THREE.Group();
-    group.name = '$group';
-
-    const geometry = new THREE.BoxGeometry( 100, 100, 100 );
-    geometry.translate(0, 50, 0);
-    const material = new THREE.MeshPhongMaterial({
-      color: 0xff0000,
-    });
-    const cube = new THREE.Mesh( geometry, material );
-
-    group.add(cube);
-    scene.add(group);
-
-    return scene;
-  }
-
-  render(gl, matrix) {
-    this.camera.projectionMatrix = new THREE.Matrix4()
-      .fromArray(matrix)
-      .multiply(this.cameraTransform);
-    this.renderer.state.reset();
-    this.renderer.render(this.scene, this.camera);
-  }
-
-  raycast(point, isClick) {
-    var mouse = new THREE.Vector2();
-     // // scale mouse pixel position to a percentage of the screen's width and height
-    mouse.x = ( point.x / this.map.transform.width ) * 2 - 1;
-    mouse.y = 1 - ( point.y / this.map.transform.height ) * 2;
-    
-    const camInverseProjection = new THREE.Matrix4().getInverse(this.camera.projectionMatrix);
-    const cameraPosition = new THREE.Vector3().applyMatrix4(camInverseProjection);
-    const mousePosition = new THREE.Vector3(mouse.x, mouse.y, 1).applyMatrix4(camInverseProjection);
-    const viewDirection = mousePosition.clone().sub(cameraPosition).normalize();    
-
-    this.raycaster.set(cameraPosition, viewDirection);
-    
-    // calculate objects intersecting the picking ray
-    var intersects = this.raycaster.intersectObjects(this.scene.children, true);
-    console.log(intersects.length);
-    $('#info').empty();
-    if (intersects.length) {
-      for(let i = 0; i < intersects.length; ++i) {
-      	$('#info').append(' ' + JSON.stringify(intersects[i].distance));
-        isClick && console.log(intersects[i]);
-      }
-      
-      isClick && $('#info').append(';');
+        this.camera.projectionMatrix = m.multiply(l);
+        this.renderer.resetState();
+        this.renderer.render(this.scene, this.camera);
+        this.map.triggerRepaint();
     }
-  }
-}
+};
 
-let boxLayer = new BoxCustomLayer('box')
 
-map.on('load', () => {
-  map.addLayer(boxLayer);
+map.on('style.load', () => {
+    map.addLayer(customLayer);
 });
-
-map.on('mousemove', e => {
-  boxLayer.raycast(e.point, false);
-});
-
-map.on('click', e => {
-  boxLayer.raycast(e.point, true);
-});
-
