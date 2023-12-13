@@ -1,10 +1,17 @@
 import * as THREE from 'three';
+//import * as OBC from 'openbim-components';
+//import Stats from 'stats.js/src/Stats.js';
 
-import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js'
+//import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js'
 import { IFCLoader } from 'web-ifc-three';
 import { IFCSPACE } from 'web-ifc';
 
-import { ifcCustomLayer } from './ifcCustomLayer.js';
+import { ifcCustomLayer } from './ifcCustomLayer.js';
+
+import { IfcClipper } from './IfcClipper.js';
+import { IfcPlane } from './IfcPlane.js';
+import { IfcComponent } from './IfcComponent.js';
+import { Plane } from './Plane.js';
 
 var mapOrigin = { LngLat: [5.0801, 47.3134], altitude: 0, rotation: new THREE.Vector3(Math.PI / 2, 0, 0) };
 var mapMercatorCoordinates = maplibregl.MercatorCoordinate.fromLngLat([mapOrigin.LngLat[0], mapOrigin.LngLat[1]], mapOrigin.altitude);

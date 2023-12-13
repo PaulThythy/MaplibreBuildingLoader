@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+import * as dat from './three.js/examples/jsm/libs/lil-gui.module.min.js';
+
 export class ifcCustomLayer {
     type = 'custom';
     renderingMode = '3d';
