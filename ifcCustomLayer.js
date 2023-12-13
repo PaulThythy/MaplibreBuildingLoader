@@ -21,7 +21,7 @@ export class ifcCustomLayer {
 
         const directionalLight = new THREE.DirectionalLight(0x404040);
         const directionalLight2 = new THREE.DirectionalLight(0x404040);
-        const ambientLight = new THREE.AmbientLight(0x404040, 100);
+        const ambientLight = new THREE.AmbientLight(0x404040, 30);
 
         directionalLight.position.set(0, -70, 100).normalize();
         directionalLight2.position.set(0, 70, 100).normalize();
@@ -36,9 +36,9 @@ export class ifcCustomLayer {
             this.scene.add(ifcModel.mesh);
         });
 
-        /*this.raycaster = new THREE.Raycaster();
+        this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
-        map.getCanvas().addEventListener('mousedown', this.onMouseDown.bind(this), false);*/
+        map.getCanvas().addEventListener('mousedown', this.onMouseDown.bind(this), false);
 
         this.map = map;
 
@@ -79,20 +79,28 @@ export class ifcCustomLayer {
         this.renderer.resetState();
         this.renderer.render(this.scene, this.camera);
         this.map.triggerRepaint();
+
+        
     }
 
-    /* onMouseDown(event) {
-      this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      this.mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-  
-      const camInverseProjection = new THREE.Matrix4().invert(this.camera.matrixWorldInverse);
-      const cameraPosition = new THREE.Vector3().applyMatrix4(camInverseProjection);
-      const mousePosition = new THREE.Vector3(this.mouse.x, this.mouse.y, 1).applyMatrix4(camInverseProjection);
-      const viewDirection = mousePosition.clone().sub(cameraPosition).normalize(); 
-  
-      this.raycaster.set(cameraPosition, viewDirection);
-  
-      var intersects = this.raycaster.intersectObjects(this.scene.children, true);
-      console.log(intersects);
-    } */
+    onMouseDown(event) {
+        this.mouse.x = (event.clientX / this.map.getCanvas().clientWidth) * 2 - 1;
+        this.mouse.y = 1 - (event.clientY / this.map.getCanvas().clientHeight) * 2;
+
+        /*const camInverseProjection = new THREE.Matrix4().invert(this.camera.projectionMatrix);
+        const cameraPosition = new THREE.Vector3().applyMatrix4(camInverseProjection);
+        const mousePosition = new THREE.Vector3(this.mouse.x, this.mouse.y, 1).applyMatrix4(camInverseProjection);
+        const viewDirection = mousePosition.clone().sub(cameraPosition).normalize(); 
+    
+        this.raycaster.set(cameraPosition, viewDirection);
+    
+        var intersects = this.raycaster.intersectObjects(this.scene.children, true);
+        console.log(intersects[0]);*/
+
+        console.log(this.camera);
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        var intersects = this.raycaster.intersectObjects(this.scene.children, false);
+        console.log(intersects);
+    } 
 }
