@@ -26,9 +26,21 @@ export class ifcCustomLayer {
         directionalLight2.position.set(0, 70, 100).normalize();
         this.scene.add(directionalLight, directionalLight2, ambientLight);
 
+        this.clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1);
+
         this.loader.load(this.url, (ifcModel) => {
+            for(let i = 0; i < ifcModel.mesh.material.length; i++) {
+                ifcModel.mesh.material[i].clippingPlanes = [this.clippingPlane];
+                ifcModel.mesh.material[i].clipShadows = true;
+                ifcModel.mesh.material[i].castShadow = true;
+            }
             this.scene.add(ifcModel.mesh);
         });
+
+        const helpers = new THREE.Group();
+        helpers.add( new THREE.PlaneHelper( this.clippingPlane, 20, 0xff0000 ) );
+        helpers.visible = true;
+        this.scene.add( helpers );
 
         /*this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -36,8 +48,12 @@ export class ifcCustomLayer {
 
         this.map = map;
 
-        this.renderer = new THREE.WebGLRenderer({ canvas: this.map.getCanvas(), context: gl });
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.map.getCanvas(),
+            context: gl
+        });
         this.renderer.autoClear = false;
+        this.renderer.localClippingEnabled = true;
     }
 
     render(gl, matrix) {
