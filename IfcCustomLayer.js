@@ -1,11 +1,13 @@
 import * as THREE from 'three';
-import { ClippingPlane } from './ClippingPlane.js';
-
+import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js'
 import * as dat from './three.js/examples/jsm/libs/lil-gui.module.min.js';
+
+import { ClippingPlane } from './ClippingPlane.js';
 
 export class IfcCustomLayer {
     type = 'custom';
     renderingMode = '3d';
+    model;
 
     constructor(_id, _url, _loader, _mapOriginTransform, _map) {
         this.id = _id;
@@ -27,18 +29,25 @@ export class IfcCustomLayer {
         directionalLight2.position.set(0, 70, 100).normalize();
         this.scene.add(directionalLight, directionalLight2, ambientLight);
 
-        //const plane = new ClippingPlane(2);
-        //this.clippingPlane = plane.getClippingPlane();
-        //plane.addHelper(5, this.scene);
+        /*const plane = new ClippingPlane(2);
+        this.clippingPlane = plane.getClippingPlane();
+        plane.addHelper(5, this.scene);*/
+
+        this.controls = new TransformControls(this.camera, this.map.getCanvas());
+        this.controls.size = 10;
 
         this.loader.load(this.url, (ifcModel) => {
-            //plane.applyClippingToMaterials(ifcModel.mesh.material);
-            this.scene.add(ifcModel.mesh);
+            this.model = ifcModel.mesh;
+            //plane.applyClippingToMaterials(this.model.material);
+            this.scene.add(this.model);
+
+            this.controls.attach(this.model);
+            this.scene.add(this.controls);
         });
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
-        map.getCanvas().addEventListener('mousedown', this.onMouseDown.bind(this), false);
+        this.map.getCanvas().addEventListener('mousedown', this.onMouseDown.bind(this), false);
 
         this.map = map;
 
@@ -79,8 +88,6 @@ export class IfcCustomLayer {
         this.renderer.resetState();
         this.renderer.render(this.scene, this.camera);
         this.map.triggerRepaint();
-
-        
     }
 
     onMouseDown(event) {
@@ -95,7 +102,7 @@ export class IfcCustomLayer {
         this.raycaster.set(cameraPosition, viewDirection);
         var intersects = this.raycaster.intersectObjects(this.scene.children, false);
         if(intersects[0] != undefined) {
-            intersects[0].object.material[intersects[0].face.materialIndex].wireframe = true;
+            
         } 
         
     }

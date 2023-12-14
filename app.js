@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 //import Stats from 'stats.js/src/Stats.js';
 
-//import { TransformControls } from './three.js/examples/jsm/controls/TransformControls.js'
 import { IFCLoader } from 'web-ifc-three';
 import { IFCSPACE } from 'web-ifc';
 
