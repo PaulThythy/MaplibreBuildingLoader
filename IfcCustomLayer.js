@@ -27,12 +27,12 @@ export class IfcCustomLayer {
         directionalLight2.position.set(0, 70, 100).normalize();
         this.scene.add(directionalLight, directionalLight2, ambientLight);
 
-        const plane = new ClippingPlane(2);
-        this.clippingPlane = plane.getClippingPlane();
-        plane.addHelper(5, this.scene);
+        //const plane = new ClippingPlane(2);
+        //this.clippingPlane = plane.getClippingPlane();
+        //plane.addHelper(5, this.scene);
 
         this.loader.load(this.url, (ifcModel) => {
-            plane.applyClippingToMaterials(ifcModel.mesh.material);
+            //plane.applyClippingToMaterials(ifcModel.mesh.material);
             this.scene.add(ifcModel.mesh);
         });
 
@@ -94,6 +94,9 @@ export class IfcCustomLayer {
 
         this.raycaster.set(cameraPosition, viewDirection);
         var intersects = this.raycaster.intersectObjects(this.scene.children, false);
-        console.log(intersects);
-    } 
+        if(intersects[0] != undefined) {
+            intersects[0].object.material[intersects[0].face.materialIndex].wireframe = true;
+        } 
+        
+    }
 }
