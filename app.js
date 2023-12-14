@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { IFCLoader } from 'web-ifc-three';
 import { IFCSPACE } from 'web-ifc';
 
-import { ifcCustomLayer } from './ifcCustomLayer.js';
+import { IfcCustomLayer } from './IfcCustomLayer.js';
 
 var mapOrigin = { LngLat: [5.0801, 47.3134], altitude: 0, rotation: new THREE.Vector3(Math.PI / 2, 0, 0) };
 var mapMercatorCoordinates = maplibregl.MercatorCoordinate.fromLngLat([mapOrigin.LngLat[0], mapOrigin.LngLat[1]], mapOrigin.altitude);
@@ -59,7 +59,7 @@ await ifcLoader.ifcManager.applyWebIfcConfig({
   USE_FAST_BOOLS: true
 });
 
-let customL = new ifcCustomLayer('custom', './testIFCFiles/01.ifc', ifcLoader, mapOriginTransform, map);
+let customL = new IfcCustomLayer('custom', './testIFCFiles/01.ifc', ifcLoader, mapOriginTransform, map);
 
 map.on('load', () => {
   map.addLayer(customL);

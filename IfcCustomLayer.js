@@ -3,7 +3,7 @@ import { ClippingPlane } from './ClippingPlane.js';
 
 import * as dat from './three.js/examples/jsm/libs/lil-gui.module.min.js';
 
-export class ifcCustomLayer {
+export class IfcCustomLayer {
     type = 'custom';
     renderingMode = '3d';
 
@@ -84,22 +84,15 @@ export class ifcCustomLayer {
     }
 
     onMouseDown(event) {
-        this.mouse.x = (event.clientX / this.map.getCanvas().clientWidth) * 2 - 1;
-        this.mouse.y = 1 - (event.clientY / this.map.getCanvas().clientHeight) * 2;
+        this.mouse.x = (event.clientX / this.map.transform.width) * 2 - 1;
+        this.mouse.y = 1 - (event.clientY / this.map.transform.height) * 2;
 
-        /*const camInverseProjection = new THREE.Matrix4().invert(this.camera.projectionMatrix);
+        const camInverseProjection = new THREE.Matrix4().copy(this.camera.projectionMatrix).invert();
         const cameraPosition = new THREE.Vector3().applyMatrix4(camInverseProjection);
         const mousePosition = new THREE.Vector3(this.mouse.x, this.mouse.y, 1).applyMatrix4(camInverseProjection);
-        const viewDirection = mousePosition.clone().sub(cameraPosition).normalize(); 
-    
+        const viewDirection = mousePosition.clone().sub(cameraPosition).normalize();
+
         this.raycaster.set(cameraPosition, viewDirection);
-    
-        var intersects = this.raycaster.intersectObjects(this.scene.children, true);
-        console.log(intersects[0]);*/
-
-        console.log(this.camera);
-
-        this.raycaster.setFromCamera(this.mouse, this.camera);
         var intersects = this.raycaster.intersectObjects(this.scene.children, false);
         console.log(intersects);
     } 
